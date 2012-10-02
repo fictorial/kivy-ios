@@ -8,10 +8,11 @@ try () {
 
 # iOS SDK Environmnent
 export SDKVER=`xcodebuild -showsdks | fgrep "iphoneos" | tail -n 1 | awk '{print $2}'`
-export DEVROOT=`xcode-select -print-path`/Platforms/iPhoneOS.platform/Developer
-export SDKROOT=$DEVROOT/SDKs/iPhoneOS$SDKVER.sdk
+export SDKROOT=$(xcodebuild -version -sdk iphoneos Path)
+export SIMULATORSDKVER=`xcodebuild -showsdks | fgrep "iphonesimulator" | tail -n 1 | awk '{print $4}'`
+export SIMULATORSDKROOT=$(xcodebuild -version -sdk iphonesimulator Path)
 
-if [ ! -d $DEVROOT ]; then
+if [ ! -d $SDKROOT ]; then
 	echo "Unable to found the Xcode iPhoneOS.platform"
 	echo
 	echo "The path is automatically set from 'xcode-select -print-path'"
@@ -43,15 +44,23 @@ export PKG_CONFIG_PATH="$BUILDROOT/pkgconfig:$PKG_CONFIG_PATH"
 export CCACHE=$(which ccache)
 
 # flags for arm compilation
-export ARM_CC="$CCACHE $DEVROOT/usr/bin/arm-apple-darwin10-llvm-gcc-4.2"
-export ARM_AR="$DEVROOT/usr/bin/ar"
-export ARM_LD="$DEVROOT/usr/bin/ld"
+export ARM_CC="$CCACHE $(xcrun -find -sdk iphoneos arm-apple-darwin10-llvm-gcc-4.2)"
+export ARM_AR=$(xcrun -find -sdk iphoneos ar)
+export ARM_LD=$(xcrun -find -sdk iphoneos ld)
 export ARM_CFLAGS="-march=armv7 -mcpu=arm176jzf -mcpu=cortex-a8"
 export ARM_CFLAGS="$ARM_CFLAGS -pipe -no-cpp-precomp"
 export ARM_CFLAGS="$ARM_CFLAGS -isysroot $SDKROOT"
 export ARM_CFLAGS="$ARM_CFLAGS -miphoneos-version-min=$SDKVER"
 export ARM_LDFLAGS="-isysroot $SDKROOT"
 export ARM_LDFLAGS="$ARM_LDFLAGS -miphoneos-version-min=$SDKVER"
+
+# xcode
+#export I386_CC=$(xcrun -find -sdk "$SDK" llvm-gcc)
+export I386_CC="$CCACHE $(xcrun -find -sdk iphonesimulator llvm-gcc)"
+export I386_LD=$(xcrun -find -sdk iphonesimulator ld)
+export I386_CFLAGS="-m32 -isysroot $SIMULATORSDKROOT -miphoneos-version-min=$SIMULATORSDKVER"
+export I386_LDFLAGS="-m32 -isysroot $SIMULATORSDKROOT -static-libgcc -miphoneos-version-min=$SIMULATORSDKVER"
+
 
 # uncomment this line if you want debugging stuff
 export ARM_CFLAGS="$ARM_CFLAGS -O3"
